@@ -1,67 +1,31 @@
-version: '3'
-services:
-  postgres:
-    image: postgres:latest
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_PASSWORD=postgres_password
-
-  redis:
-    image: redis:latest
-  
-  api:
-    build: 
-      dockerfile: Dockerfile.dev
-      context: ./server
-    volumes:
-      # Leave the node_modules folder out of the volume
-      - /app/node_modules
-      - ./server:/app
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - PGUSER=postgres
-      - PGHOST=postgres
-      - PGDATABASE=postgres
-      - PGPASSWORD=postgres_password
-      - PGPORT=5432
-    depends_on:
-      - postgres
-      - redis
-
-  client:
-    build: 
-      dockerfile: Dockerfile.dev
-      context: ./client
-    volumes:
-      # Leave the node_modules folder out of the volume
-      - /app/node_modules
-      - ./client:/app
-    environment:
-      - WDS_SOCKET_PORT=0
-    # environment:
-    #   - REACT_APP_SERVER_URL=http://localhost:4000
-
-  worker:
-    build:
-      dockerfile: Dockerfile.dev
-      context: ./worker
-    volumes:
-      # Leave the node_modules folder out of the volume
-      - /app/node_modules
-      - ./worker:/app
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-
-  nginx:
-    restart: always
-    build: 
-      dockerfile: Dockerfile.dev
-      context: ./nginx
-    ports:
-      - "3050:80"
-    depends_on:
-      - client
-      - api
+    version: "3"
+    services:
+      client:
+        image: "bibi12/multi-client-10-14"
+        mem_limit: 128m
+        hostname: client
+      server:
+        image: "bibi12/multi-server-10-14"
+        mem_limit: 128m
+        hostname: api
+        environment:
+          - REDIS_HOST=$REDIS_HOST
+          - REDIS_PORT=$REDIS_PORT
+          - PGUSER=$PGUSER
+          - PGHOST=$PGHOST
+          - PGDATABASE=$PGDATABASE
+          - PGPASSWORD=$PGPASSWORD
+          - PGPORT=$PGPORT
+      worker:
+        image: "bibi12/multi-worker-10-14"
+        mem_limit: 128m
+        hostname: worker
+        environment:
+          - REDIS_HOST=$REDIS_HOST
+          - REDIS_PORT=$REDIS_PORT
+      nginx:
+        image: "bibi12/multi-nginx-10-14"
+        mem_limit: 128m
+        hostname: nginx
+        ports:
+          - "80:80"
