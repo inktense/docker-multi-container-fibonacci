@@ -1,16 +1,38 @@
-const keys = require("./keys");
+//const keys = require("./keys");
+import { keys } from './keys.js'
 
 // Express App Setup
-const express = require("express");
-const bodyParser = require("body-parser");
-const cors = require("cors");
+//const express = require("express");
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+//import pkg from 'pg';
+import pkg from 'pg';
+//console.log(pkg)
+const { Pool } = pkg
+import { createClient } from 'redis';
+// const bodyParser = require("body-parser");
+// const cors = require("cors");
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
+// Redis Client Setup
+//const redis = require("redis");
+  const redisClient = createClient({
+    url: 'redis://redis:6379',
+    host: keys.redisHost,
+    port: keys.redisPort,
+    retry_strategy: () => 1000,
+  });
+  
+  await redisClient.connect();
+
+  redisClient.on('error', err => console.log('Redis Client Error', err));
+
+
 // Postgres Client Setup
-const { Pool } = require("pg");
 const pgClient = new Pool({
   user: keys.pgUser,
   host: keys.pgHost,
@@ -25,14 +47,9 @@ pgClient.on("connect", (client) => {
     .catch((err) => console.error(err));
 });
 
-// Redis Client Setup
-const redis = require("redis");
-const redisClient = redis.createClient({
-  host: keys.redisHost,
-  port: keys.redisPort,
-  retry_strategy: () => 1000,
-});
+
 const redisPublisher = redisClient.duplicate();
+await redisPublisher.connect();
 
 // Express route handlers
 
@@ -42,14 +59,13 @@ app.get("/", (req, res) => {
 
 app.get("/values/all", async (req, res) => {
   const values = await pgClient.query("SELECT * from values");
-
   res.send(values.rows);
 });
 
 app.get("/values/current", async (req, res) => {
-  redisClient.hgetall("values", (err, values) => {
-    res.send(values);
-  });
+  const values = await redisClient.hGetAll("values");
+  console.log("values => ", values)
+  res.send(values);
 });
 
 app.post("/values", async (req, res) => {
@@ -59,8 +75,9 @@ app.post("/values", async (req, res) => {
     return res.status(422).send("Index too high");
   }
 
-  redisClient.hset("values", index, "Nothing yet!");
-  redisPublisher.publish("insert", index);
+  await redisClient.hSet("values", index, "Nothing yet!");
+  await redisPublisher.publish("insert", index);
+
   pgClient.query("INSERT INTO values(number) VALUES($1)", [index]);
 
   res.send({ working: true });
