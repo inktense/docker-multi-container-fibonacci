@@ -10,18 +10,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-      - run: docker build -t inktense/react-test -f ./client/Dockerfile.dev ./client
-      - run: docker run -e CI=true inktense/react-test npm test
+      - run: docker build -t bibi12/react-test -f ./client/Dockerfile.dev ./client
+      - run: docker run -e CI=true bibi12/react-test npm test
   
-      - run: docker build -t inktense/multi-client-10-14 ./client
-      - run: docker build -t inktense/multi-nginx-10-14 ./nginx
-      - run: docker build -t inktense/multi-server-10-14 ./server
-      - run: docker build -t inktense/multi-worker-10-14 ./worker
+      - run: docker build -t bibi12/multi-client-10-14 ./client
+      - run: docker build -t bibi12/multi-nginx-10-14 ./nginx
+      - run: docker build -t bibi12/multi-server-10-14 ./server
+      - run: docker build -t bibi12/multi-worker-10-14 ./worker
   
-      - run: docker push inktense/multi-client-10-14
-      - run: docker push inktense/multi-nginx-10-14
-      - run: docker push inktense/multi-server-10-14
-      - run: docker push inktense/multi-worker-10-14
+      - run: docker push bibi12/multi-client-10-14
+      - run: docker push bibi12/multi-nginx-10-14
+      - run: docker push bibi12/multi-server-10-14
+      - run: docker push bibi12/multi-worker-10-14
   
       - name: Generate deployment package
         run: zip -r deploy.zip . -x '*.git*'
