@@ -23,7 +23,7 @@ To run the app, you will need to follow these steps:
    - Run the following command to start the app:
 
 ``` 
-docker-compose -f docker-compose.dev up
+docker-compose -f docker-compose.dev.yml up
  ```
 
 - Once the containers are running, open your web browser and go to http://localhost:3000.
